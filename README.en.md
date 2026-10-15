@@ -17,12 +17,9 @@
 </div>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img src="docs/screenshot-light.png" alt="PrimaPorts window: ports in use, connected devices, power and activity">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-en-dark.png">
+  <img src="docs/screenshot-en-light.png" alt="PrimaPorts window: ports in use, connected devices, power and activity">
 </picture>
-
-> The interface is currently in French. The screenshots show the main sections: *Prises du PC* (PC ports),
-> *Appareils connectés* (connected devices), *Alimentation* (power) and *Activité* (activity log).
 
 ## Why PrimaPorts?
 
@@ -38,10 +35,12 @@ window: one glance tells you **which port is in use, by what, at what speed and 
 - **Power**: power drawn from the charger, battery charging rate, PC consumption measured on battery, battery capacity and voltage.
 - **Real time**: a device appears as soon as it is plugged in and disappears as soon as it is removed. The activity log keeps track of every connection.
 - **Unobtrusive**: closing the window sends it to the system tray. PrimaPorts keeps watching and shows a Windows notification for every connection.
+- **Bilingual**: English and French interface, following your Windows language or your own choice.
+- **Lightweight**: a full scan takes about 0.4 seconds; the window is not redrawn while hidden.
 - **Handy**: start with Windows, export to CSV, JSON or text, quick search (`Ctrl K`), light or dark theme, layout that adapts to your screen size.
 
 <div align="center">
-  <img src="docs/screenshot-details.png" alt="Device details: port in use, negotiated speed and requested power" width="88%">
+  <img src="docs/screenshot-en-details.png" alt="Device details: port in use, negotiated speed and requested power" width="88%">
   <br><sub>Device details: port, speed, power, identifiers.</sub>
 </div>
 
@@ -59,12 +58,13 @@ window: one glance tells you **which port is in use, by what, at what speed and 
 
 | Action | How |
 | --- | --- |
-| See a device's details | Click its row, or its port under *Prises du PC* |
-| Set your charger's wattage | Power panel → *Indiquer sa puissance* |
+| See a device's details | Click its row, or its port under *PC ports* |
+| Set your charger's wattage | Power panel → *Set its wattage* |
 | Measure your PC's consumption | Unplug the charger for about ten seconds |
+| Switch between English and French | **FR / EN** button, top right |
 | Export, start with Windows | **…** menu, top right |
 | Rescan · Search · Zoom | `F5` · `Ctrl K` · `Ctrl +` / `Ctrl -` / `Ctrl 0` |
-| Actually quit | Right-click the tray icon → *Quitter* |
+| Actually quit | Right-click the tray icon → *Quit* |
 
 ## Privacy
 
@@ -73,10 +73,10 @@ The activity log and settings stay on your PC, in `%APPDATA%\PrimaPorts`.
 
 ## How it works
 
-- Devices are read through Windows interfaces (CIM/WMI and Plug and Play).
+- The device list is read directly from Windows (SetupAPI), in a single pass.
 - Physical USB ports, their type (USB‑A or USB‑C), the negotiated speed and the declared power are read directly from the USB controllers, the same way Microsoft's USBView tool does.
 - Windows reports every connection and every power change, and PrimaPorts updates the display immediately.
-- The app is built with Electron; data collection relies on PowerShell and a small C# module.
+- The app is built with Electron; data collection relies on PowerShell and two small C# modules.
 
 ## Good to know
 
@@ -104,8 +104,9 @@ npm run dist
 | Folder / file | Purpose |
 | --- | --- |
 | `app/` | Electron app: window, tray icon, notifications, collection engine and activity log. |
-| `ui/` | User interface (HTML, CSS, JavaScript). |
-| `collector/collect.ps1` | Device inventory through Windows (CIM/WMI, Plug and Play). |
+| `ui/` | User interface (HTML, CSS, JavaScript); `ui/i18n.js` holds the English and French strings. |
+| `collector/collect.ps1` | Inventory of plugged-in devices; language-neutral output, translated by the UI. |
+| `collector/Devices.cs` | Native read of the Windows device list (SetupAPI). |
 | `collector/UsbTopology.cs` | Reads the USB controllers: ports, USB‑C, speed, power. |
 | `collector/worker.ps1` · `watcher.ps1` | Long-running collector and connection event listener. |
 | `build/` | Icons and the script that generates them (`python build/make-icons.py`). |

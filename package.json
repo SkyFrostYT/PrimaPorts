@@ -1,8 +1,8 @@
 {
   "name": "primaports",
   "productName": "PrimaPorts",
-  "version": "1.0.1",
-  "description": "Les ports actifs de votre PC, en temps réel.",
+  "version": "1.1.0",
+  "description": "Les ports actifs de votre PC, en temps réel / Your PC's active ports, in real time.",
   "author": "PrimaPorts",
   "license": "UNLICENSED",
   "private": true,
@@ -47,6 +47,19 @@
     },
     "portable": {
       "artifactName": "PrimaPorts-${version}-portable.${ext}"
+    },
+    "electronLanguages": [
+      "fr",
+      "en-US"
+    ],
+    "compression": "maximum",
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
     }
   },
   "devDependencies": {

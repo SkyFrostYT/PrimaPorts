@@ -66,6 +66,9 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .tools { display: flex; gap: 4px; }
 .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: none; color: var(--ink-2); }
 .icon-btn:hover { background: var(--sunk); color: var(--ink); }
+/* Bouton de langue : petit rectangle FR / EN */
+.lang-btn { height: 26px; min-width: 36px; padding: 0 8px; margin-right: 6px; border: 1.5px solid var(--line-2); border-radius: 7px; background: none; color: var(--ink-2); font: 650 12px/1 var(--font); letter-spacing: .06em; align-self: center; }
+.lang-btn:hover { border-color: var(--ink-2); color: var(--ink); }
 .icon-btn.spin svg { animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .menu { position: relative; }

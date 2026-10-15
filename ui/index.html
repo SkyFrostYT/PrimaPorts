@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Les textes sont posés par app.js selon la langue (attributs data-i18n*) -->
   <header class="bar">
     <div class="bar-in">
       <div class="brand">
@@ -16,28 +17,29 @@
         <strong>PrimaPorts</strong>
       </div>
       <div class="machine">
-        <span id="machine">Analyse du PC…</span>
-        <span class="live" id="live" title="Mise à jour en temps réel"><i></i><em>En direct</em></span>
+        <span id="machine" data-i18n="bar.analyzing"></span>
+        <span class="live" id="live" data-i18n-title="bar.liveTitle"><i></i><em data-i18n="bar.live"></em></span>
       </div>
       <div class="tools">
-        <button class="icon-btn" id="refreshBtn" type="button" title="Réanalyser (F5)" aria-label="Réanalyser">
+        <button class="lang-btn" id="langBtn" type="button" data-i18n-title="menu.switchLang" data-i18n-aria="menu.switchLang">FR</button>
+        <button class="icon-btn" id="refreshBtn" type="button" data-i18n-title="bar.refresh" data-i18n-aria="bar.refresh">
           <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
         </button>
         <div class="menu">
-          <button class="icon-btn" id="exportBtn" type="button" title="Plus" aria-label="Plus d'options" aria-haspopup="true" aria-expanded="false">
+          <button class="icon-btn" id="moreBtn" type="button" data-i18n-title="bar.more" data-i18n-aria="bar.more" aria-haspopup="true" aria-expanded="false">
             <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
           </button>
-          <div class="menu-pop" id="exportMenu" hidden>
-            <p class="menu-label">Exporter</p>
-            <button type="button" data-export="csv">Tableur (.csv)</button>
-            <button type="button" data-export="json">Données (.json)</button>
-            <button type="button" data-export="txt">Rapport texte (.txt)</button>
-            <button type="button" data-export="copy">Copier le rapport</button>
+          <div class="menu-pop" id="moreMenu" hidden>
+            <p class="menu-label" data-i18n="menu.export"></p>
+            <button type="button" data-export="csv" data-i18n="menu.csv"></button>
+            <button type="button" data-export="json" data-i18n="menu.json"></button>
+            <button type="button" data-export="txt" data-i18n="menu.txt"></button>
+            <button type="button" data-export="copy" data-i18n="menu.copy"></button>
             <hr>
-            <button type="button" class="check" role="menuitemcheckbox" aria-checked="false" data-login-item>Lancer au démarrage de Windows</button>
+            <button type="button" class="check" role="menuitemcheckbox" aria-checked="false" data-login-item data-i18n="menu.login"></button>
           </div>
         </div>
-        <button class="icon-btn" id="themeBtn" type="button" title="Thème" aria-label="Changer de thème"></button>
+        <button class="icon-btn" id="themeBtn" type="button"></button>
       </div>
     </div>
   </header>
@@ -46,7 +48,7 @@
     <div class="col-main">
       <section class="card" aria-labelledby="portsTitle">
         <div class="card-head">
-          <h2 id="portsTitle">Prises du PC</h2>
+          <h2 id="portsTitle" data-i18n="ports.title"></h2>
           <span class="muted" id="portsSummary"></span>
         </div>
         <div class="sockets" id="sockets"><div class="skeleton"></div></div>
@@ -54,10 +56,10 @@
 
       <section class="card" aria-labelledby="devTitle">
         <div class="card-head">
-          <h2 id="devTitle">Appareils connectés</h2>
+          <h2 id="devTitle"></h2>
           <label class="search">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-            <input id="q" type="search" placeholder="Rechercher" autocomplete="off" aria-label="Rechercher un appareil">
+            <input id="q" type="search" autocomplete="off" data-i18n-placeholder="dev.search" data-i18n-aria="dev.searchLabel">
             <kbd>Ctrl K</kbd>
           </label>
         </div>
@@ -66,8 +68,8 @@
 
       <section class="card" aria-labelledby="logTitle">
         <div class="card-head">
-          <h2 id="logTitle">Activité</h2>
-          <button id="clearHistory" class="link" type="button">Effacer</button>
+          <h2 id="logTitle" data-i18n="log.title"></h2>
+          <button id="clearHistory" class="link" type="button" data-i18n="log.clear"></button>
         </div>
         <ol id="history" class="timeline"></ol>
       </section>
@@ -75,13 +77,14 @@
 
     <aside class="col-side">
       <section class="card" aria-labelledby="powerTitle">
-        <div class="card-head"><h2 id="powerTitle">Alimentation</h2><span class="muted" id="powerState"></span></div>
+        <div class="card-head"><h2 id="powerTitle" data-i18n="power.title"></h2><span class="muted" id="powerState"></span></div>
         <div id="power"><div class="skeleton"></div></div>
       </section>
     </aside>
   </main>
 
   <div id="toasts" class="toasts" aria-live="assertive"></div>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

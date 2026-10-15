@@ -8,8 +8,9 @@ const { EventEmitter } = require('events');
 const PS = ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File'];
 const WEEK = 7 * 24 * 3600e3;
 
-// Port actif = appareil réellement connecté, externe au PC (ni intégré, ni virtuel, ni simple ressource réseau).
-const isActive = d => d.status === 'connected' && !(d.tags || []).some(t => t === 'internal' || t === 'virtual') && d.connection !== 'Réseau';
+// Port actif = appareil réellement connecté et externe au PC. Le collecteur ne remonte déjà que ceux-là ;
+// ce filtre reste comme garde-fou.
+const isActive = d => d.status !== 'paired' && !(d.tags || []).some(t => t === 'internal' || t === 'virtual');
 
 class Core extends EventEmitter {
   constructor({ collectorDir, dataDir }) {
@@ -21,8 +22,10 @@ class Core extends EventEmitter {
     fs.mkdirSync(dataDir, { recursive: true });
 
     this.snapshot = null;
-    this.history = this.#read(this.historyFile, []);
-    this.settings = { chargerW: null, draws: [], ...this.#read(this.settingsFile, {}) };
+    // Journal des versions 1.0 (textes en français) : le chargeur passe au format traduisible
+    this.history = this.#read(this.historyFile, []).map(e => e.id === 'POWER:AC' && !e.nameKey
+      ? { ...e, nameKey: 'charger', connection: 'ac', port: { type: 'power' } } : e);
+    this.settings = { chargerW: null, draws: [], lang: 'auto', ...this.#read(this.settingsFile, {}) };
     this.inflight = null;
     this.again = false;
     this.stopped = false;
@@ -119,7 +122,15 @@ class Core extends EventEmitter {
   #diff(prev, next) {
     const before = new Map(prev.devices.map(d => [d.id, d]));
     const after = new Map(next.devices.map(d => [d.id, d]));
-    const ev = (type, d) => ({ time: next.generatedAt, type, id: d.id, name: d.name, category: d.category, connection: d.connection, port: d.port });
+    // L'événement garde de quoi afficher la prise dans n'importe quelle langue, même après débranchement
+    const ports = new Map([...prev.ports, ...next.ports].map(p => [p.id, p]));
+    const ev = (type, d) => {
+      const p = ports.get(d.portRef);
+      return {
+        time: next.generatedAt, type, id: d.id, name: d.name, nameKey: d.nameKey, category: d.category, connection: d.connection,
+        port: p ? { type: p.type, usb3: p.usb3, n: p.n } : d.portType ? { type: d.portType } : null,
+      };
+    };
     return [
       ...[...after].filter(([id]) => !before.has(id)).map(([, d]) => ev('added', d)),
       ...[...before].filter(([id]) => !after.has(id)).map(([, d]) => ev('removed', d)),
@@ -144,7 +155,7 @@ class Core extends EventEmitter {
   }
 
   setChargerW(w) {
-    if (w !== null && !(Number.isFinite(w) && w >= 5 && w <= 300)) throw new Error('Puissance attendue entre 5 et 300 W.');
+    if (w !== null && !(Number.isFinite(w) && w >= 5 && w <= 300)) throw new Error('charger-range');
     this.settings.chargerW = w;
     this.#saveSettings();
     if (this.snapshot) {
@@ -152,6 +163,13 @@ class Core extends EventEmitter {
       this.emit('snapshot', { snapshot: this.snapshot, events: [] });
     }
     return w;
+  }
+
+  setLang(lang) {
+    if (!['auto', 'fr', 'en'].includes(lang)) throw new Error('Unsupported language: ' + lang);
+    this.settings.lang = lang;
+    this.#saveSettings();
+    return lang;
   }
 
   clearHistory() {

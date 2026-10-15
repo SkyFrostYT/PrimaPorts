@@ -36,6 +36,8 @@ prise est utilisée, par quoi, à quelle vitesse et avec quelle puissance**.
 - **Alimentation** : puissance tirée du chargeur, recharge de la batterie, consommation du PC mesurée sur batterie, capacité et tension de la batterie.
 - **Temps réel** : un appareil apparaît dès qu'on le branche et disparaît dès qu'on le retire. Le journal d'activité garde la trace de chaque branchement.
 - **Discret** : fermer la fenêtre la range près de l'horloge. PrimaPorts continue de veiller et envoie une notification Windows à chaque branchement.
+- **Bilingue** : interface en français et en anglais, selon la langue de Windows ou au choix.
+- **Léger** : une analyse complète prend environ 0,4 seconde ; la fenêtre ne se redessine pas quand elle est cachée.
 - **Pratique** : lancement au démarrage de Windows, export en CSV, JSON ou texte, recherche rapide (`Ctrl K`), thème clair ou sombre, interface qui s'adapte à la taille de l'écran.
 
 <div align="center">
@@ -60,6 +62,7 @@ prise est utilisée, par quoi, à quelle vitesse et avec quelle puissance**.
 | Voir le détail d'un appareil | Cliquer sur sa ligne, ou sur sa prise dans « Prises du PC » |
 | Indiquer la puissance du chargeur | Panneau Alimentation → *Indiquer sa puissance* |
 | Mesurer la consommation du PC | Débrancher le chargeur une dizaine de secondes |
+| Passer du français à l'anglais | Bouton **FR / EN** en haut à droite |
 | Exporter, lancer au démarrage | Menu **…** en haut à droite |
 | Réanalyser · Rechercher · Zoom | `F5` · `Ctrl K` · `Ctrl +` / `Ctrl -` / `Ctrl 0` |
 | Quitter vraiment | Clic droit sur l'icône près de l'horloge → *Quitter* |
@@ -71,10 +74,10 @@ Le journal et les réglages restent sur votre PC, dans `%APPDATA%\PrimaPorts`.
 
 ## Comment ça marche
 
-- Les appareils sont lus via les interfaces de Windows (CIM/WMI et Plug and Play).
+- La liste des périphériques est lue directement auprès de Windows (SetupAPI), en un seul passage.
 - Les prises USB physiques, leur type (USB‑A ou USB‑C), la vitesse négociée et la puissance déclarée sont lues directement auprès des contrôleurs USB, comme le fait l'outil USBView de Microsoft.
 - Windows signale chaque branchement et chaque changement d'alimentation, et PrimaPorts met l'affichage à jour aussitôt.
-- L'application est construite avec Electron ; la collecte est assurée par PowerShell et un petit module C#.
+- L'application est construite avec Electron ; la collecte est assurée par PowerShell et deux petits modules C#.
 
 ## Bon à savoir
 
@@ -102,8 +105,9 @@ npm run dist
 | Dossier / fichier | Rôle |
 | --- | --- |
 | `app/` | Application Electron : fenêtre, icône de notification, notifications, moteur de collecte et journal. |
-| `ui/` | Interface (HTML, CSS, JavaScript). |
-| `collector/collect.ps1` | Inventaire des appareils via Windows (CIM/WMI, Plug and Play). |
+| `ui/` | Interface (HTML, CSS, JavaScript) ; `ui/i18n.js` contient les textes français et anglais. |
+| `collector/collect.ps1` | Inventaire des appareils branchés ; sortie neutre, traduite par l'interface. |
+| `collector/Devices.cs` | Lecture native de la liste des périphériques Windows (SetupAPI). |
 | `collector/UsbTopology.cs` | Lecture des contrôleurs USB : prises, USB‑C, vitesse, puissance. |
 | `collector/worker.ps1` · `watcher.ps1` | Collecteur gardé actif et écoute des événements de branchement. |
 | `build/` | Icônes et script qui les génère (`python build/make-icons.py`). |

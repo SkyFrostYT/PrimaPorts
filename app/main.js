@@ -4,6 +4,7 @@ const { app, BrowserWindow, ipcMain, Tray, Menu, Notification, dialog, nativeIma
 const fs = require('fs');
 const path = require('path');
 const { Core } = require('./core');
+const I18N = require('../ui/i18n.js');
 
 const ROOT = path.join(__dirname, '..');
 const START_HIDDEN = process.argv.includes('--hidden');
@@ -13,23 +14,19 @@ const THEMES = {
   dark: { bg: '#0f1114', ink: '#ecebe7' },
 };
 
+// Version publiée : refuse les options de débogage à distance (inspection du code et de la page)
+if (app.isPackaged && ['remote-debugging-port', 'remote-debugging-pipe', 'inspect', 'inspect-brk'].some(s => app.commandLine.hasSwitch(s))) {
+  app.exit(1);
+  return;
+}
 if (!app.requestSingleInstanceLock()) { app.quit(); return; }
 app.setAppUserModelId('fr.primatoria.primaports');
 Menu.setApplicationMenu(null);
 
 let win, tray, core, quitting = false, toldAboutTray = false, theme = 'light';
+let L = I18N.create('fr');   // textes de la langue courante (menu de l'icône, notifications)
+const applyLang = () => { L = I18N.create(I18N.resolve(core.settings.lang, app.getLocale())); };
 
-// ------------------------------------------------------------------ données
-function dataDir() {
-  const dir = app.getPath('userData');
-  // Reprend le journal et les réglages de l'ancienne version « serveur local »
-  const legacy = path.join(ROOT, 'data');
-  for (const f of ['history.json', 'settings.json']) {
-    const from = path.join(legacy, f), to = path.join(dir, f);
-    try { if (fs.existsSync(from) && !fs.existsSync(to)) { fs.mkdirSync(dir, { recursive: true }); fs.copyFileSync(from, to); } } catch { /* sans gravité */ }
-  }
-  return dir;
-}
 const collectorDir = () => app.isPackaged ? path.join(process.resourcesPath, 'collector') : path.join(ROOT, 'collector');
 const asset = name => path.join(__dirname, 'assets', name);
 
@@ -102,7 +99,7 @@ function createWindow() {
     backgroundColor: THEMES[theme].bg,
     titleBarStyle: 'hidden',
     titleBarOverlay: { color: THEMES[theme].bg, symbolColor: THEMES[theme].ink, height: barHeight() },
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, zoomFactor: zoom },
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, spellcheck: false, zoomFactor: zoom },
   });
   if (layout?.maximized) win.maximize();
   win.loadFile(path.join(ROOT, 'ui', 'index.html'));
@@ -126,7 +123,7 @@ function createWindow() {
     win.hide();
     if (!toldAboutTray) {
       toldAboutTray = true;
-      notify('PrimaPorts reste actif', 'Il continue de surveiller vos ports depuis la zone de notification.');
+      notify(L.t('notif.stillRunning'), L.t('notif.stillRunningBody'));
     }
   });
   // Liens externes éventuels : navigateur par défaut, jamais dans l'application
@@ -149,15 +146,16 @@ function createTray() {
 }
 
 function updateTrayMenu() {
+  if (!tray) return;
   const n = core?.snapshot?.devices.length;
-  if (n != null) tray.setToolTip(`PrimaPorts — ${n} port${n > 1 ? 's' : ''} actif${n > 1 ? 's' : ''}`);
+  if (n != null) tray.setToolTip(L.t(n > 1 ? 'tray.tooltipMany' : 'tray.tooltip', { n }));
   tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Ouvrir PrimaPorts', click: showWindow },
-    { label: 'Réanalyser', click: () => core.refresh().catch(() => {}) },
+    { label: L.t('tray.open'), click: showWindow },
+    { label: L.t('tray.refresh'), click: () => core.refresh().catch(() => {}) },
     { type: 'separator' },
-    { label: 'Lancer au démarrage de Windows', type: 'checkbox', checked: openAtLogin(), click: m => setOpenAtLogin(m.checked) },
+    { label: L.t('tray.login'), type: 'checkbox', checked: openAtLogin(), click: m => setOpenAtLogin(m.checked) },
     { type: 'separator' },
-    { label: 'Quitter', click: () => { quitting = true; app.quit(); } },
+    { label: L.t('tray.quit'), click: () => { quitting = true; app.quit(); } },
   ]));
 }
 
@@ -173,19 +171,24 @@ function notify(title, body) {
 }
 
 // ------------------------------------------------------------------ moteur
-function startCore() {
-  core = new Core({ collectorDir: collectorDir(), dataDir: dataDir() });
+function initCore() {
+  core = new Core({ collectorDir: collectorDir(), dataDir: app.getPath('userData') });
+  applyLang();
   core.on('snapshot', payload => {
     win?.webContents.send('snapshot', payload);
     updateTrayMenu();
     // Notification Windows quand la fenêtre n'est pas sous les yeux
     if (!win?.isVisible() || !win.isFocused()) {
       for (const e of payload.events.slice(0, 3)) {
-        notify(e.name, `${e.type === 'added' ? 'Branché' : 'Débranché'}${e.port ? ' · ' + e.port : ''}`);
+        const port = typeof e.port === 'string' ? e.port : L.portLabel(e.port) || L.connLabel(e.connection);
+        notify(L.deviceName(e), `${L.t('ev.' + e.type)}${port ? ' · ' + port : ''}`);
       }
     }
   });
-  core.on('error', e => console.error(e));
+  core.on('error', () => { /* le collecteur redémarre seul ; l'interface affiche l'erreur à la demande */ });
+}
+
+function startCore() {
   core.start();
 
   // Filet de sécurité : Bluetooth et réseau ne déclenchent pas toujours d'événement Windows
@@ -201,8 +204,16 @@ ipcMain.handle('state', async () => ({
   snapshot: core.snapshot || await core.refresh(),
   history: core.history,
   openAtLogin: openAtLogin(),
+  langPref: core.settings.lang,
+  lang: L.lang,
   version: app.getVersion(),
 }));
+ipcMain.handle('set-lang', (_e, pref) => {
+  core.setLang(pref);
+  applyLang();
+  updateTrayMenu();
+  return { pref, lang: L.lang };
+});
 ipcMain.handle('refresh', () => core.refresh());
 ipcMain.handle('set-charger', (_e, w) => core.setChargerW(w));
 ipcMain.handle('clear-history', () => core.clearHistory());
@@ -227,6 +238,7 @@ app.on('before-quit', () => { quitting = true; core?.stop(); });
 app.on('window-all-closed', e => e.preventDefault());
 
 app.whenReady().then(() => {
+  initCore();
   createWindow();
   createTray();
   startCore();
