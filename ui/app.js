@@ -7,6 +7,7 @@ const ICONS = {
   display: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
   keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M8 14h8"/>',
   mouse: '<rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v3"/>',
+  gamepad: '<path d="M7 7h10a5 5 0 0 1 4.9 6l-.7 3.4a2.5 2.5 0 0 1-4.2 1.2L14.5 15h-5l-2.5 2.6a2.5 2.5 0 0 1-4.2-1.2L2.1 13A5 5 0 0 1 7 7z"/><path d="M7.5 10v3M6 11.5h3"/><circle cx="15.5" cy="10.5" r=".6"/><circle cx="17.5" cy="12.5" r=".6"/>',
   audio: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>',
   camera: '<circle cx="12" cy="10" r="6"/><circle cx="12" cy="10" r="2"/><path d="M8 20h8M12 16v4"/>',
   phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
@@ -39,7 +40,7 @@ GLYPHS['ethernet-usb'] = GLYPHS.ethernet;
 const icon = (n, cls = '') => `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">${ICONS[n] || ICONS.usb}</svg>`;
 const glyph = t => `<svg viewBox="0 0 34 22" aria-hidden="true">${GLYPHS[t] || GLYPHS.video}</svg>`;
 
-const ORDER = ['storage', 'display', 'keyboard', 'mouse', 'audio', 'camera', 'phone', 'network', 'printer', 'power', 'usb'];
+const ORDER = ['storage', 'display', 'keyboard', 'mouse', 'gamepad', 'audio', 'camera', 'phone', 'network', 'printer', 'power', 'usb'];
 
 // ------------------------------------------------------------------ état
 const api = window.primaports;

@@ -136,6 +136,9 @@ foreach ($r in $all) {
         $first = $kids | Where-Object { $_.Class -in 'Mouse', 'Keyboard' } | Sort-Object InstanceId | Select-Object -First 1
         $cat = if ($first.Class -eq 'Mouse') { 'mouse' } else { 'keyboard' }
     }
+    # Manette avant l'audio : beaucoup de manettes (DualShock, Xbox…) ont une prise casque intégrée
+    elseif ($classes -match '^(XnaComposite|XboxComposite|XINPUT)$' -or
+        @($kids + $r | Where-Object { $_.Name -match 'game ?controller|contrôleur de jeu|gamepad|manette|xbox|dualsense|dualshock|wireless controller' }).Count) { $cat = 'gamepad' }
     elseif ($classes -contains 'MEDIA' -or $classes -contains 'AudioEndpoint') { $cat = 'audio' }
     elseif ($classes -contains 'Bluetooth') { $cat = 'network' }
     elseif ($classes -contains 'Printer') { $cat = 'printer' }
@@ -146,7 +149,8 @@ foreach ($r in $all) {
         $name = if ($better) { $better.Name } elseif ($r.BusDesc) { $r.BusDesc } else { $r.Name }
     }
     $vendor = $VENDORS[$vid]; if (-not $vendor -and $r.Manufacturer -notmatch '^\(|Standard|Microsoft') { $vendor = $r.Manufacturer }
-    $functions = (@($kids | Where-Object { $_.Name -and $_.Class -notin 'USB', 'HIDClass' } | ForEach-Object { $_.Name } | Select-Object -Unique) -join ', ')
+    # Fonctions de l'appareil (les sorties audio ont leur propre ligne « Audio »)
+    $functions = (@($kids | Where-Object { $_.Name -and $_.Name -ne $name -and $_.Class -notin 'USB', 'HIDClass', 'AudioEndpoint' } | ForEach-Object { $_.Name } | Select-Object -Unique) -join ', ')
 
     $d = Add-Device -Id $r.InstanceId -Category $cat -Name $name -Connection 'usb' -Vendor $vendor `
         -Status $(if ($r.Problem -eq 0) { 'connected' } else { 'error' }) -Info @(
@@ -224,14 +228,30 @@ foreach ($b in $all) {
     $btHosts[$n] = $d
 }
 
-# ---------------------------------------------------------------- Audio analogique (jack)
+# ---------------------------------------------------------------- Audio analogique (jack du PC)
+$byDevice = @{}; foreach ($x in $devices) { $byDevice[$x.id.ToUpper()] = $x }
+# État d'une sortie / entrée audio tel que Windows le tient : 1 = active (prise réellement branchée)
+function Test-EndpointActive([string]$InstanceId) {
+    if ($InstanceId -notmatch '\{0\.0\.(\d)\.00000000\}\.(\{[0-9A-F-]+\})') { return $false }
+    $flow = if ($Matches[1] -eq '0') { 'Render' } else { 'Capture' }
+    $state = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\$flow\$($Matches[2])" -Name DeviceState).DeviceState
+    ($state -band 0xF) -eq 1
+}
 foreach ($a in $all) {
     if ($a.Class -ne 'AudioEndpoint') { continue }
     $n = $a.Name
     $host_ = $null; foreach ($bn in $btHosts.Keys) { if ($n -like "*$bn*") { $host_ = $btHosts[$bn] } }
+    # Audio d'un appareil USB (manette, casque USB…) : rattaché à cet appareil, jamais compté comme jack du PC
+    $node = if ($a.Parent) { $byId[$a.Parent.ToUpper()] }
+    for ($i = 0; $i -lt 4 -and $node -and -not $host_; $i++) {
+        $host_ = $byDevice[$node.InstanceId.ToUpper()]
+        if ($node.Parent) { $node = $byId[$node.Parent.ToUpper()] } else { $node = $null }
+    }
     if ($host_) { $host_.info.Add(@('audio', $n)); continue }
-    # Seuls les casques / lignes branchés en jack sont des ports actifs ; l'USB est déjà listé, le reste est intégré ou virtuel
-    if ($n -notmatch '^(Casque|Écouteurs|Headphones?|Headset|Line|Ligne|Entrée ligne|Sortie ligne|Micro externe|External Mic)' -or $n -match 'USB|Virtual|Virtuel') { continue }
+    # Jack du PC : sortie de la carte son intégrée, au nom de casque / ligne, et que Windows signale active
+    if (-not $a.InLocalMachine -or $a.Parent -match '^(USB|BTH|SWD|ROOT)' -or
+        $n -notmatch '^(Casque|Écouteurs|Headphones?|Headset|Line|Ligne|Entrée ligne|Sortie ligne|Micro externe|External Mic)' -or
+        -not (Test-EndpointActive $a.InstanceId)) { continue }
     $role = if ($n -match 'Micro|Mic|Entrée|Input|Line In') { 'in' } else { 'out' }
     $d = Add-Device -Id $a.InstanceId -Category 'audio' -Name $n -Connection 'jack' -Status $(if ($a.Problem -eq 0) { 'connected' } else { 'error' }) -Info @(
         , @('role', $role)
