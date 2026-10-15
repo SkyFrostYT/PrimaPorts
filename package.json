@@ -1,0 +1,56 @@
+{
+  "name": "primaports",
+  "productName": "PrimaPorts",
+  "version": "1.0.1",
+  "description": "Les ports actifs de votre PC, en temps réel.",
+  "author": "PrimaPorts",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "app/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis portable"
+  },
+  "build": {
+    "appId": "fr.primatoria.primaports",
+    "productName": "PrimaPorts",
+    "copyright": "PrimaPorts",
+    "files": [
+      "app/**",
+      "ui/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "collector",
+        "to": "collector"
+      }
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "PrimaPorts",
+      "artifactName": "PrimaPorts-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "PrimaPorts-${version}-portable.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3"
+  }
+}

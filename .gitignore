@@ -1,0 +1,13 @@
+# Dépendances et builds
+node_modules/
+dist/
+
+# Données locales (journal, réglages) de l'ancienne version serveur
+data/
+
+# Outils locaux
+.claude/
+
+# Système
+Thumbs.db
+desktop.ini

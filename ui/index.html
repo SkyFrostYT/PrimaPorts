@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <title>PrimaPorts</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="bar-in">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="3" width="26" height="26" rx="8" fill="var(--ink)"/><rect x="8.5" y="12" width="15" height="9" rx="2.5" fill="none" stroke="var(--bg)" stroke-width="2"/><path d="M12.5 16.5h7" stroke="var(--bg)" stroke-width="2" stroke-linecap="round"/><circle cx="23" cy="8.5" r="2.4" fill="var(--led)"/></svg>
+        <strong>PrimaPorts</strong>
+      </div>
+      <div class="machine">
+        <span id="machine">Analyse du PC…</span>
+        <span class="live" id="live" title="Mise à jour en temps réel"><i></i><em>En direct</em></span>
+      </div>
+      <div class="tools">
+        <button class="icon-btn" id="refreshBtn" type="button" title="Réanalyser (F5)" aria-label="Réanalyser">
+          <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+        </button>
+        <div class="menu">
+          <button class="icon-btn" id="exportBtn" type="button" title="Plus" aria-label="Plus d'options" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+          </button>
+          <div class="menu-pop" id="exportMenu" hidden>
+            <p class="menu-label">Exporter</p>
+            <button type="button" data-export="csv">Tableur (.csv)</button>
+            <button type="button" data-export="json">Données (.json)</button>
+            <button type="button" data-export="txt">Rapport texte (.txt)</button>
+            <button type="button" data-export="copy">Copier le rapport</button>
+            <hr>
+            <button type="button" class="check" role="menuitemcheckbox" aria-checked="false" data-login-item>Lancer au démarrage de Windows</button>
+          </div>
+        </div>
+        <button class="icon-btn" id="themeBtn" type="button" title="Thème" aria-label="Changer de thème"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="col-main">
+      <section class="card" aria-labelledby="portsTitle">
+        <div class="card-head">
+          <h2 id="portsTitle">Prises du PC</h2>
+          <span class="muted" id="portsSummary"></span>
+        </div>
+        <div class="sockets" id="sockets"><div class="skeleton"></div></div>
+      </section>
+
+      <section class="card" aria-labelledby="devTitle">
+        <div class="card-head">
+          <h2 id="devTitle">Appareils connectés</h2>
+          <label class="search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="q" type="search" placeholder="Rechercher" autocomplete="off" aria-label="Rechercher un appareil">
+            <kbd>Ctrl K</kbd>
+          </label>
+        </div>
+        <div id="devices" class="devices" aria-live="polite"><div class="skeleton"></div></div>
+      </section>
+
+      <section class="card" aria-labelledby="logTitle">
+        <div class="card-head">
+          <h2 id="logTitle">Activité</h2>
+          <button id="clearHistory" class="link" type="button">Effacer</button>
+        </div>
+        <ol id="history" class="timeline"></ol>
+      </section>
+    </div>
+
+    <aside class="col-side">
+      <section class="card" aria-labelledby="powerTitle">
+        <div class="card-head"><h2 id="powerTitle">Alimentation</h2><span class="muted" id="powerState"></span></div>
+        <div id="power"><div class="skeleton"></div></div>
+      </section>
+    </aside>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="assertive"></div>
+  <script src="app.js"></script>
+</body>
+</html>
